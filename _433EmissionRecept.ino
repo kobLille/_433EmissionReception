@@ -1,14 +1,24 @@
 
 #define ledPin 8
-#define maxi 300
+#define maxi 200
 
-typedef struct requete requetes;
-struct requete
+typedef struct requete1 requetes1;
+struct requete1
 {
   bool emetteur[26] ;
   bool groupe ;
   bool etat ;
   bool interupteur[4];
+};
+
+typedef struct requete2 requetes2;
+struct requete2
+{
+  bool emetteur[26] ;
+  bool groupe ;
+  bool etat ;
+  bool interupteur[4];
+  bool level[4];
 };
 
 class DIOClass {
@@ -19,7 +29,8 @@ class DIOClass {
     int sEmis;
     int index;
     int enCours;
-    int tailleRequete;
+    int fin;
+    int tailleRequete,tailleRequete1,tailleRequete2;
     int toggle;
     byte tEnvoieRequete[40];
 
@@ -30,47 +41,71 @@ class DIOClass {
       digitalWrite(sEmis, LOW);
       infoSortie = 1;
       index = 0;
-      tailleRequete = sizeof(requetes);
+      tailleRequete1 = sizeof(requetes1);
+       tailleRequete2 = sizeof(requetes2);
     }
 
     void maj() {  //Fonction permettant la mise à jour en fonction du timer
-      if (enCours) {
-        if (cpt1) {
-          digitalWrite(sEmis, LOW);
-          infoSortie = 1;
-          cpt1--;
-        }
-        else {
-          if (cpt0) {
-            digitalWrite(sEmis, HIGH);
-            infoSortie = 0;
-            cpt0--;
-          }
-          else {
+        if (enCours) {
+          if (cpt1) {
             digitalWrite(sEmis, LOW);
             infoSortie = 1;
-            bitSuivant();
+            cpt1--;
           }
+          else {
+            if (cpt0) {
+              digitalWrite(sEmis, HIGH);
+              infoSortie = 0;
+              cpt0--;
+            }
+            else {
+              digitalWrite(sEmis, LOW);
+              infoSortie = 1;
+              if (fin)
+                enCours = 0;
+              bitSuivant();
+            }
+          }
+
+       //    Serial.print("cpt0 : ");
+       //    Serial.print(cpt0);
+       //    Serial.print(";cpt1 : ");
+       //    Serial.println(cpt1);
         }
-      }
     }
 
-    void envoieCours(requetes envoieRequete) { //Fonction permettant de lancer l'envoie de la requete
-      Serial.println("Lancement");
+    void envoieCours1(requetes1 envoieRequete) { //Fonction permettant de lancer l'envoie de la requete
+      // Serial.println("Lancement");
       enCours = 1;
+      fin=0;
       initCpt(2);
       index = -1;
       toggle = 0;
-      memcpy(&tEnvoieRequete, &envoieRequete, tailleRequete);
-      Serial.println("requete : ");
+       tailleRequete=tailleRequete1;
+      memcpy(&tEnvoieRequete, &envoieRequete, tailleRequete1);
+      // Serial.println("requete : ");
+
+    }
+
+     void envoieCours2(requetes2 envoieRequete) { //Fonction permettant de lancer l'envoie de la requete
+      // Serial.println("Lancement");
+      enCours = 1;
+      fin=0;
+      initCpt(2);
+      index = -1;
+      toggle = 0;
+      tailleRequete=tailleRequete2;
+      memcpy(&tEnvoieRequete, &envoieRequete, tailleRequete2);
+      // Serial.println("requete : ");
 
     }
 
     void bitSuivant() {
       if (!toggle)
         index++;
-      if ((index < tailleRequete ) && enCours)
+      if((index < tailleRequete ) && enCours)
       {
+        
         if (!toggle) {
           toggle = 1;
           //        Serial.println("------------------------");
@@ -89,8 +124,9 @@ class DIOClass {
       }
       else
       {
-        enCours = 0;
-        Serial.println("Fin");
+        initCpt(3);
+        fin=1;
+        //  Serial.println("Fin");
       }
 
       maj();
@@ -105,6 +141,13 @@ class DIOClass {
     }
     int valIndex() {
       return index;
+    }
+
+    int envoieEncours() {
+      if (enCours)
+        return 0;
+      else
+        return 1;
     }
 
     int compt(int val) {
@@ -122,11 +165,15 @@ class DIOClass {
           break;
         case 1:   //cpt pour un bit à 1
           cpt1 = 1;
-          cpt0 = 3;
+          cpt0 = 6;
           break;
         case 2:  //cpt pour le début de l'envoie d'une trame
-          cpt1 = 0;
-          cpt0 = 10;
+          cpt1 = 1;
+          cpt0 = 9;
+          break;
+        case 3:  //cpt pour la fin de l'envoie d'une trame
+          cpt1 = 1;
+          cpt0 = 40;
           break;
       }
     }
@@ -136,12 +183,13 @@ class DIOClass {
 
 };
 
-unsigned int val[maxi];
+//unsigned long val[maxi];
+int val[maxi];
 unsigned long  memo, tampon;
-unsigned long  memo1, tampon1;
 bool trame[100];
-int i, j, k, l, ok;
-requetes envoie;
+int i, j, k, l, ok, recept, requete;
+requetes1 envoie;
+requetes2 envoie1;
 int memoEtatSorti = 1;
 DIOClass DIO;
 
@@ -165,94 +213,174 @@ void setup() {
   TCCR1A = 0;
   TCCR1B = 0;
   TCNT1 = 0;
-
+  TIMSK1 = 0;
   //OCR1A = 31250; // 16MHz/256/2Hz
   //OCR1A = 6250; //toutes les secondes
-   OCR1A = 30; //toutes les secondes
+  OCR1A = 4000; //toutes les secondes
   //OCR1A = 500000; //toutes les secondes
   TCCR1B |= (1 << WGM12); // CTC mode
   // TCCR1B |= (1 << CS12); // 256 prescaler
-  TCCR1B |= (1 << CS11); // 256 prescaler
+  //TCCR1B |= (1 << CS11); // 256 prescaler
   TCCR1B |= (1 << CS10); // 256 prescaler
 
   TIMSK1 |= (1 << OCIE1A); // Activer le mode de comparaison
+
+  delay(1000);
+
   interrupts(); // activer toutes les interruptions
+  Serial.println("fin init");
+
+
+  //  0011 1010 1101 0111 0010 1010 1000 1001
+  //  0011 1010 1101 0111 0010 1010 1000 1001
+  //  0011 1010 1101 0111 0010 1010 1001 1001 0110 mise à 1
+  //  0011 1010 1101 0111 0010 1010 1001 1000 0000 envoie
+
+  envoie.emetteur[0] = 1 ;
+  envoie.emetteur[1] = 1 ;
+  envoie.emetteur[2] = 0 ;
+  envoie.emetteur[3] = 0 ;
+
+  envoie.emetteur[4] = 0 ;
+  envoie.emetteur[5] = 1 ;
+  envoie.emetteur[6] = 0 ;
+  envoie.emetteur[7] = 1 ;
+
+  envoie.emetteur[8] = 0 ;
+  envoie.emetteur[9] = 0 ;
+  envoie.emetteur[10] = 1 ;
+  envoie.emetteur[11] = 0 ;
+
+  envoie.emetteur[12] = 1 ;
+  envoie.emetteur[13] = 0 ;
+  envoie.emetteur[14] = 0 ;
+  envoie.emetteur[15] = 0 ;
+
+  envoie.emetteur[16] = 1 ;
+  envoie.emetteur[17] = 1 ;
+  envoie.emetteur[18] = 0 ;
+  envoie.emetteur[19] = 1 ;
+
+  envoie.emetteur[20] = 0 ;
+  envoie.emetteur[21] = 1 ;
+  envoie.emetteur[22] = 0 ;
+  envoie.emetteur[23] = 1 ;
+
+  envoie.emetteur[24] = 0 ;
+  envoie.emetteur[25] = 1 ;
+  envoie.groupe = 1 ;
+  envoie.etat = 0 ;
+
+  envoie.interupteur[0] = 0;
+  envoie.interupteur[1] = 1;
+  envoie.interupteur[2] = 1;
+  envoie.interupteur[3] = 0;
+
+ 
+
+  //envoie1
+  envoie1.emetteur[0] = 0 ;
+  envoie1.emetteur[1] = 0 ;
+  envoie1.emetteur[2] = 1 ;
+  envoie1.emetteur[3] = 1 ;
+
+  envoie1.emetteur[4] = 1 ;
+  envoie1.emetteur[5] = 0 ;
+  envoie1.emetteur[6] = 1 ;
+  envoie1.emetteur[7] = 0 ;
+
+  envoie1.emetteur[8] = 1 ;
+  envoie1.emetteur[9] = 1 ;
+  envoie1.emetteur[10] = 0 ;
+  envoie1.emetteur[11] = 1 ;
+
+  envoie1.emetteur[12] = 0 ;
+  envoie1.emetteur[13] = 1 ;
+  envoie1.emetteur[14] = 1 ;
+  envoie1.emetteur[15] = 1 ;
+
+  envoie1.emetteur[16] = 0 ;
+  envoie1.emetteur[17] = 0 ;
+  envoie1.emetteur[18] = 1 ;
+  envoie1.emetteur[19] = 0 ;
+
+  envoie1.emetteur[20] = 1 ;
+  envoie1.emetteur[21] = 0 ;
+  envoie1.emetteur[22] = 1 ;
+  envoie1.emetteur[23] = 0 ;
+
+  envoie1.emetteur[24] = 1 ;
+  envoie1.emetteur[25] = 0 ;
+  envoie1.groupe = 0 ;
+  envoie1.etat = 1 ;
+
+  envoie1.interupteur[0] = 1;
+  envoie1.interupteur[1] = 0;
+  envoie1.interupteur[2] = 0;
+  envoie1.interupteur[3] = 1;
+
+   envoie1.level[0] = 1;
+  envoie1.level[1] = 0;
+  envoie1.level[2] = 0;
+  envoie1.level[3] = 1;
 
 }
 
 void loop() {
-  //  0011 1010 1101 0111 0010 1010 1000 1001
-
-  envoie.emetteur[0] = 0 ;
-  envoie.emetteur[1] = 0 ;
-  envoie.emetteur[2] = 1 ;
-  envoie.emetteur[3] = 1 ;
-
-  envoie.emetteur[4] = 1 ;
-  envoie.emetteur[5] = 0 ;
-  envoie.emetteur[6] = 1 ;
-  envoie.emetteur[7] = 0 ;
-
-  envoie.emetteur[8] = 1 ;
-  envoie.emetteur[9] = 1 ;
-  envoie.emetteur[10] = 0 ;
-  envoie.emetteur[11] = 1 ;
-
-  envoie.emetteur[12] = 0 ;
-  envoie.emetteur[13] = 1 ;
-  envoie.emetteur[14] = 1 ;
-  envoie.emetteur[15] = 1 ;
-
-  envoie.emetteur[16] = 0 ;
-  envoie.emetteur[17] = 0 ;
-  envoie.emetteur[18] = 1 ;
-  envoie.emetteur[19] = 0 ;
-
-  envoie.emetteur[20] = 1 ;
-  envoie.emetteur[21] = 0 ;
-  envoie.emetteur[22] = 1 ;
-  envoie.emetteur[23] = 0 ;
-
-  envoie.emetteur[24] = 1 ;
-  envoie.emetteur[25] = 0 ;
-  envoie.groupe = 0 ;
-  envoie.etat = 0 ;
-
-  envoie.interupteur[0] = 1;
-  envoie.interupteur[1] = 0;
-  envoie.interupteur[2] = 0;
-  envoie.interupteur[3] = 1;
+int toto;
 
   if (Serial.available() > 0) {
-    DIO.envoieCours(envoie);
+    DIO.envoieCours2(envoie1);
+    requete = 5;
     Serial.println("recu");
     Serial.read();
   }
 
-  if (j != i)
+  if (requete)
   {
+    if (!DIO.enCours)
+    {
+      DIO.envoieCours2(envoie1);
+      requete--;
+    }
+  }
+toto=(micros() - memo);
+
+  if (recept && (toto > 20000))
+  { ok = 1;
+    recept = 0;
+  //    Serial.print(toto);
+  //    Serial.print(" : ");
+  //    Serial.print(micros());
+  //    Serial.print(" : ");
+  //          Serial.print(micros() - memo);
+    //  Serial.println(" -> fini");
+  }
+
+  if ((j != i) && recept)
+  {
+    noInterrupts();
     if (val[j])
     {
-      noInterrupts();
       tampon = val[j];
-      Serial.print("valeur : ");
-      Serial.println(tampon );
-      interrupts();
-      if (tampon > 2500)
+         Serial.print("valeur : ");
+         Serial.println(tampon );
+      if (tampon > 2000)
       {
         ok = 1;
-        Serial.println();
+        recept = 0;
+       //    Serial.println("fini1");
       }
       else
       {
         if (tampon > 750)
         {
           trame[k] = 1;
-          Serial.print("1");
+          //     Serial.print("1");
         }
         else
         {
-          Serial.print("0");
+          //                Serial.print("0");
           trame[k] = 0;
         }
         k++;
@@ -261,6 +389,7 @@ void loop() {
 
     }
     if (j++ >= maxi) j = 0;
+    interrupts();
   }
 
   if (ok)
@@ -285,11 +414,11 @@ void loop() {
 
 void blink()
 {
-  val[i] = (int)(micros() - memo);
-//  Serial.print("valeur : ");
-//  Serial.println(val[i]);
-
-  memo = micros();
+  unsigned long top;
+  recept = 1;
+  top=micros();
+  val[i] = top-memo;
+  memo = top;
   if (i++ >= maxi) i = 0;
 }
 
