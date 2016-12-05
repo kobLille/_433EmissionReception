@@ -30,7 +30,7 @@ class DIOClass {
     int index;
     int enCours;
     int fin;
-    int tailleRequete,tailleRequete1,tailleRequete2;
+    int tailleRequete, tailleRequete1, tailleRequete2;
     int toggle;
     byte tEnvoieRequete[40];
 
@@ -42,59 +42,59 @@ class DIOClass {
       infoSortie = 1;
       index = 0;
       tailleRequete1 = sizeof(requetes1);
-       tailleRequete2 = sizeof(requetes2);
+      tailleRequete2 = sizeof(requetes2);
     }
 
     void maj() {  //Fonction permettant la mise à jour en fonction du timer
-        if (enCours) {
-          if (cpt1) {
+      if (enCours) {
+        if (cpt1) {
+          digitalWrite(sEmis, HIGH);
+          infoSortie = 1;
+          cpt1--;
+        }
+        else {
+          if (cpt0) {
             digitalWrite(sEmis, LOW);
-            infoSortie = 1;
-            cpt1--;
+            infoSortie = 0;
+            cpt0--;
           }
           else {
-            if (cpt0) {
-              digitalWrite(sEmis, HIGH);
-              infoSortie = 0;
-              cpt0--;
-            }
-            else {
-              digitalWrite(sEmis, LOW);
-              infoSortie = 1;
-              if (fin)
-                enCours = 0;
-              bitSuivant();
-            }
+            digitalWrite(sEmis, LOW);
+            infoSortie = 1;
+            if (fin)
+              enCours = 0;
+            bitSuivant();
           }
-
-       //    Serial.print("cpt0 : ");
-       //    Serial.print(cpt0);
-       //    Serial.print(";cpt1 : ");
-       //    Serial.println(cpt1);
         }
+
+        //    Serial.print("cpt0 : ");
+        //    Serial.print(cpt0);
+        //    Serial.print(";cpt1 : ");
+        //    Serial.println(cpt1);
+      }
     }
 
     void envoieCours1(requetes1 envoieRequete) { //Fonction permettant de lancer l'envoie de la requete
       // Serial.println("Lancement");
       enCours = 1;
-      fin=0;
+      fin = 0;
       initCpt(2);
       index = -1;
       toggle = 0;
-       tailleRequete=tailleRequete1;
+      tailleRequete = tailleRequete1;
       memcpy(&tEnvoieRequete, &envoieRequete, tailleRequete1);
       // Serial.println("requete : ");
 
     }
 
-     void envoieCours2(requetes2 envoieRequete) { //Fonction permettant de lancer l'envoie de la requete
+    void envoieCours2(requetes2 envoieRequete) { //Fonction permettant de lancer l'envoie de la requete
       // Serial.println("Lancement");
       enCours = 1;
-      fin=0;
+      fin = 0;
       initCpt(2);
       index = -1;
       toggle = 0;
-      tailleRequete=tailleRequete2;
+      tailleRequete = tailleRequete2;
       memcpy(&tEnvoieRequete, &envoieRequete, tailleRequete2);
       // Serial.println("requete : ");
 
@@ -103,9 +103,9 @@ class DIOClass {
     void bitSuivant() {
       if (!toggle)
         index++;
-      if((index < tailleRequete ) && enCours)
+      if ((index < tailleRequete ) && enCours)
       {
-        
+
         if (!toggle) {
           toggle = 1;
           //        Serial.println("------------------------");
@@ -125,7 +125,7 @@ class DIOClass {
       else
       {
         initCpt(3);
-        fin=1;
+        fin = 1;
         //  Serial.println("Fin");
       }
 
@@ -173,7 +173,7 @@ class DIOClass {
           break;
         case 3:  //cpt pour la fin de l'envoie d'une trame
           cpt1 = 1;
-          cpt0 = 40;
+          cpt0 = 41;
           break;
       }
     }
@@ -276,7 +276,7 @@ void setup() {
   envoie.interupteur[2] = 1;
   envoie.interupteur[3] = 0;
 
- 
+
 
   //envoie1
   envoie1.emetteur[0] = 0 ;
@@ -312,14 +312,14 @@ void setup() {
   envoie1.emetteur[24] = 1 ;
   envoie1.emetteur[25] = 0 ;
   envoie1.groupe = 0 ;
-  envoie1.etat = 1 ;
+  envoie1.etat = 0 ;
 
   envoie1.interupteur[0] = 1;
   envoie1.interupteur[1] = 0;
   envoie1.interupteur[2] = 0;
   envoie1.interupteur[3] = 1;
 
-   envoie1.level[0] = 1;
+  envoie1.level[0] = 1;
   envoie1.level[1] = 0;
   envoie1.level[2] = 0;
   envoie1.level[3] = 1;
@@ -327,33 +327,64 @@ void setup() {
 }
 
 void loop() {
-int toto;
+  int toto, caractere;
 
   if (Serial.available() > 0) {
-    DIO.envoieCours2(envoie1);
-    requete = 5;
-    Serial.println("recu");
-    Serial.read();
+    caractere = Serial.read();
+ 
+          DIO.envoieCours2(envoie1);
+        requete = 5;
+  
+    Serial.print("recu : ");
+    Serial.println(caractere);
+    switch (caractere) {
+      case 97:
+        DIO.envoieCours2(envoie1);
+        requete = 5;
+        Serial.println("envoie1");
+        break;
+      case 101:
+        DIO.envoieCours1(envoie);
+        requete = 5;
+        Serial.println("envoie");
+        break;
+
+    }
+
   }
 
   if (requete)
   {
     if (!DIO.enCours)
     {
-      DIO.envoieCours2(envoie1);
+      switch (caractere) {
+        case 97:
+          DIO.envoieCours2(envoie1);
+          Serial.print("envoie1 : ");
+       
+          break;
+        case 101:
+          DIO.envoieCours1(envoie);
+          Serial.print("envoie1 : ");
+          break;
+
+      }
+      
+          DIO.envoieCours2(envoie1);
       requete--;
+         Serial.println(requete);
     }
   }
-toto=(micros() - memo);
+  toto = (micros() - memo);
 
   if (recept && (toto > 20000))
   { ok = 1;
     recept = 0;
-  //    Serial.print(toto);
-  //    Serial.print(" : ");
-  //    Serial.print(micros());
-  //    Serial.print(" : ");
-  //          Serial.print(micros() - memo);
+    //    Serial.print(toto);
+    //    Serial.print(" : ");
+    //    Serial.print(micros());
+    //    Serial.print(" : ");
+    //          Serial.print(micros() - memo);
     //  Serial.println(" -> fini");
   }
 
@@ -363,13 +394,13 @@ toto=(micros() - memo);
     if (val[j])
     {
       tampon = val[j];
-         Serial.print("valeur : ");
-         Serial.println(tampon );
+      Serial.print("valeur : ");
+      Serial.println(tampon );
       if (tampon > 2000)
       {
         ok = 1;
         recept = 0;
-       //    Serial.println("fini1");
+        //    Serial.println("fini1");
       }
       else
       {
@@ -416,8 +447,8 @@ void blink()
 {
   unsigned long top;
   recept = 1;
-  top=micros();
-  val[i] = top-memo;
+  top = micros();
+  val[i] = top - memo;
   memo = top;
   if (i++ >= maxi) i = 0;
 }
