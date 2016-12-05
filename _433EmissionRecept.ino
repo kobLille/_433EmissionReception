@@ -66,12 +66,29 @@ class DIOClass {
             bitSuivant();
           }
         }
-
-        //    Serial.print("cpt0 : ");
-        //    Serial.print(cpt0);
-        //    Serial.print(";cpt1 : ");
-        //    Serial.println(cpt1);
       }
+    }
+
+    void envoieCours(bool emetteur[28], bool groupe, bool etat, bool interupteur[4]) { //Fonction permettant de lancer l'envoie de la requete
+      // Serial.println("Lancement");
+      int a;
+      requetes1 envoieRequete;
+      memcpy(&tEnvoieRequete, &emetteur, 26);
+      memcpy(&tEnvoieRequete + 26, &interupteur, 4);
+      tEnvoieRequete[26] = groupe;
+      tEnvoieRequete[27] = etat;
+      enCours = 1;
+      fin = 0;
+      initCpt(2);
+      index = -1;
+      toggle = 0;
+      tailleRequete = tailleRequete1;
+      //memcpy(&tEnvoieRequete, &envoieRequete, tailleRequete1);
+      Serial.print("requete : ");
+      for (a = 0; a < tailleRequete1; a++)
+        Serial.print(tEnvoieRequete[a]);
+      Serial.println();
+
     }
 
     void envoieCours1(requetes1 envoieRequete) { //Fonction permettant de lancer l'envoie de la requete
@@ -230,51 +247,51 @@ void setup() {
   interrupts(); // activer toutes les interruptions
   Serial.println("fin init");
 
-
+  // 3AC72A8
   //  0011 1010 1101 0111 0010 1010 1000 1001
   //  0011 1010 1101 0111 0010 1010 1000 1001
   //  0011 1010 1101 0111 0010 1010 1001 1001 0110 mise à 1
   //  0011 1010 1101 0111 0010 1010 1001 1000 0000 envoie
 
-  envoie.emetteur[0] = 1 ;
-  envoie.emetteur[1] = 1 ;
-  envoie.emetteur[2] = 0 ;
-  envoie.emetteur[3] = 0 ;
+  envoie.emetteur[0] = 0 ;
+  envoie.emetteur[1] = 0 ;
+  envoie.emetteur[2] = 1 ;
+  envoie.emetteur[3] = 1 ;
 
-  envoie.emetteur[4] = 0 ;
-  envoie.emetteur[5] = 1 ;
-  envoie.emetteur[6] = 0 ;
-  envoie.emetteur[7] = 1 ;
+  envoie.emetteur[4] = 1 ;
+  envoie.emetteur[5] = 0 ;
+  envoie.emetteur[6] = 1 ;
+  envoie.emetteur[7] = 0 ;
 
-  envoie.emetteur[8] = 0 ;
-  envoie.emetteur[9] = 0 ;
-  envoie.emetteur[10] = 1 ;
-  envoie.emetteur[11] = 0 ;
+  envoie.emetteur[8] = 1 ;
+  envoie.emetteur[9] = 1 ;
+  envoie.emetteur[10] = 0 ;
+  envoie.emetteur[11] = 1 ;
 
-  envoie.emetteur[12] = 1 ;
-  envoie.emetteur[13] = 0 ;
-  envoie.emetteur[14] = 0 ;
-  envoie.emetteur[15] = 0 ;
+  envoie.emetteur[12] = 0 ;
+  envoie.emetteur[13] = 1 ;
+  envoie.emetteur[14] = 1 ;
+  envoie.emetteur[15] = 1 ;
 
-  envoie.emetteur[16] = 1 ;
-  envoie.emetteur[17] = 1 ;
-  envoie.emetteur[18] = 0 ;
-  envoie.emetteur[19] = 1 ;
+  envoie.emetteur[16] = 0 ;
+  envoie.emetteur[17] = 0 ;
+  envoie.emetteur[18] = 1 ;
+  envoie.emetteur[19] = 0 ;
 
-  envoie.emetteur[20] = 0 ;
-  envoie.emetteur[21] = 1 ;
-  envoie.emetteur[22] = 0 ;
-  envoie.emetteur[23] = 1 ;
+  envoie.emetteur[20] = 1 ;
+  envoie.emetteur[21] = 0 ;
+  envoie.emetteur[22] = 1 ;
+  envoie.emetteur[23] = 0 ;
 
-  envoie.emetteur[24] = 0 ;
-  envoie.emetteur[25] = 1 ;
-  envoie.groupe = 1 ;
+  envoie.emetteur[24] = 1 ;
+  envoie.emetteur[25] = 0 ;
+  envoie.groupe = 0 ;
   envoie.etat = 0 ;
 
-  envoie.interupteur[0] = 0;
-  envoie.interupteur[1] = 1;
-  envoie.interupteur[2] = 1;
-  envoie.interupteur[3] = 0;
+  envoie.interupteur[0] = 1;
+  envoie.interupteur[1] = 0;
+  envoie.interupteur[2] = 0;
+  envoie.interupteur[3] = 1;
 
 
 
@@ -311,8 +328,8 @@ void setup() {
 
   envoie1.emetteur[24] = 1 ;
   envoie1.emetteur[25] = 0 ;
-  envoie1.groupe = 0 ;
-  envoie1.etat = 0 ;
+  envoie1.groupe = 1 ;
+  envoie1.etat = 1 ;
 
   envoie1.interupteur[0] = 1;
   envoie1.interupteur[1] = 0;
@@ -331,48 +348,24 @@ void loop() {
 
   if (Serial.available() > 0) {
     caractere = Serial.read();
- 
-          DIO.envoieCours2(envoie1);
-        requete = 5;
-  
+
+    //DIO.envoieCours1(envoie);
+    //requete = 5;
+    DIO.envoieCours(0x3AC72A8, 0, 1, 0x9);
+    requete = 5;
     Serial.print("recu : ");
-    Serial.println(caractere);
-    switch (caractere) {
-      case 97:
-        DIO.envoieCours2(envoie1);
-        requete = 5;
-        Serial.println("envoie1");
-        break;
-      case 101:
-        DIO.envoieCours1(envoie);
-        requete = 5;
-        Serial.println("envoie");
-        break;
-
-    }
-
   }
 
   if (requete)
   {
     if (!DIO.enCours)
     {
-      switch (caractere) {
-        case 97:
-          DIO.envoieCours2(envoie1);
-          Serial.print("envoie1 : ");
-       
-          break;
-        case 101:
-          DIO.envoieCours1(envoie);
-          Serial.print("envoie1 : ");
-          break;
 
-      }
-      
-          DIO.envoieCours2(envoie1);
+      DIO.envoieCours(0x3AC72A8, 0, 1, 0x9);
+
+      //      DIO.envoieCours1(envoie);
       requete--;
-         Serial.println(requete);
+
     }
   }
   toto = (micros() - memo);
