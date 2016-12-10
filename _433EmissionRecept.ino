@@ -86,7 +86,10 @@ class DIOClass {
       //memcpy(&tEnvoieRequete, &envoieRequete, tailleRequete1);
       Serial.print("requete : ");
       for (a = 0; a < tailleRequete1; a++)
+        {Serial.print(a);
+        Serial.print(": ");
         Serial.print(tEnvoieRequete[a]);
+        Serial.print("; ");}
       Serial.println();
 
     }
