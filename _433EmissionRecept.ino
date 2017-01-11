@@ -31,12 +31,12 @@ class DIOClass {
       if (enCours) {
 //         Serial.print("iiniCpt : ");
 //     Serial.println(cpt0);
-                Serial.print("cpt0");
-                Serial.print(": ");
-                Serial.print(cpt0 );
-                Serial.print(",cpt1");
-                Serial.print(": ");
-                Serial.println(cpt1 );
+//                Serial.print("cpt0");
+//                Serial.print(": ");
+//                Serial.print(cpt0 );
+//                Serial.print(",cpt1");
+//                Serial.print(": ");
+//                Serial.println(cpt1 );
 //
 //          Serial.print("répetition : ");
 //         Serial.println(repetition );
@@ -242,10 +242,10 @@ void loop() {
     //   DIO.envoieCours(0xEB5CAA, 0, 1, 0x9, 10);
     if (caractere)
     {
-      DIO.envoieCours(0xEB5CAA, 0, 1, 0x9, 10);
+      DIO.envoieCours(0xEB5CAA, 0, 1, 0x9, 3);
       //  break;
       delay(3000);
-        DIO.envoieCours(0xEB5CAA, 0, 0, 0x9, 10);
+        DIO.envoieCours(0xEB5CAA, 0, 0, 0x9, 3);
       //  break;
     }
     //caractere = 0;
