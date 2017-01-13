@@ -27,19 +27,8 @@ class DIOClass {
     }
 
     void maj() {  //Fonction permettant la mise à jour en fonction du timer
-    
+
       if (enCours) {
-//         Serial.print("iiniCpt : ");
-//     Serial.println(cpt0);
-//                Serial.print("cpt0");
-//                Serial.print(": ");
-//                Serial.print(cpt0 );
-//                Serial.print(",cpt1");
-//                Serial.print(": ");
-//                Serial.println(cpt1 );
-//
-//          Serial.print("répetition : ");
-//         Serial.println(repetition );
         if (cpt1) {
           digitalWrite(sEmis, HIGH);
           cpt1--;
@@ -56,7 +45,7 @@ class DIOClass {
               {
                 pointer = 0x80000000;
                 initCpt(2);
-                fin=0;
+                fin = 0;
               }
               else
               {
@@ -73,7 +62,7 @@ class DIOClass {
     }
 
     void envoieCours(long emetteur, bool groupe, bool etat, int interupteur, int rept) { //Fonction permettant de lancer l'envoie de la requete
-      Serial.println("Lancement");
+
       int a;
       trame = 0;
       trame = (long) emetteur;
@@ -84,31 +73,45 @@ class DIOClass {
       trame = trame << 4;
       trame = trame + (long)interupteur;
       pointer = 0x80000000;
-      enCours = 1;
       repetition = rept;
       fin = 0;
       initCpt(2);
       index = -1;
       toggle = 0;
+      enCours = 1;
+      Serial.println("Lancement : ");
+      Serial.println(trame, BIN);
+      Serial.println(pointer, BIN);
     }
 
-    void A() {
-       if (!toggle)
-      {
-        pointer = pointer >> 1;
-        pointer = pointer & 0x7FFFFFFF;
-      }
+    void bitSuivant() {
+//      if (!toggle)
+//      {
+//        pointer = pointer >> 1;
+//        pointer = pointer & 0x7FFFFFFF;
+//      }
 
       if (pointer && enCours)
       {
-  //      Serial.println("coucou ");
+        //      Serial.println("coucou ");
         if (!toggle) {
+          //Serial.print(trame & pointer,BIN);
+          //Serial.print(" : ");
           toggle = 1;
           //        Serial.println("------------------------");
-          if (trame & pointer)
+          if (trame & pointer) {
+//            Serial.print(1);
+//            Serial.print(" : "); 
+//            Serial.println(pointer,BIN); 
             initCpt(1);
+          }
           else
-            initCpt(0);
+          {
+//            Serial.print(0);
+//            Serial.print(" : "); 
+//            Serial.println(pointer,BIN); 
+           initCpt(0);
+          }
         }
         else {
           toggle = 0;
@@ -116,15 +119,17 @@ class DIOClass {
             initCpt(0);
           else
             initCpt(1);
+              pointer = pointer >> 1;
+        pointer = pointer & 0x7FFFFFFF;
         }
-  
+
 
       }
       else
       {
         initCpt(3);
         fin = 1;
-        //  Serial.println("Fin");
+        Serial.println("Fin");
       }
 
       maj();
@@ -244,8 +249,8 @@ void loop() {
     {
       DIO.envoieCours(0xEB5CAA, 0, 1, 0x9, 3);
       //  break;
-      delay(3000);
-        DIO.envoieCours(0xEB5CAA, 0, 0, 0x9, 3);
+      //    delay(3000);
+      //    DIO.envoieCours(0xEB5CAA, 0, 0, 0x9, 3);
       //  break;
     }
     //caractere = 0;
@@ -277,69 +282,69 @@ void loop() {
 
   //   }
   // }
-  toto = (micros() - memo);
-
-  if (recept && (toto > 20000))
-  { ok = 1;
-    recept = 0;
-    //    Serial.print(toto);
-    //    Serial.print(" : ");
-    //    Serial.print(micros());
-    //    Serial.print(" : ");
-    //          Serial.print(micros() - memo);
-    //  Serial.println(" -> fini");
-  }
-
-  if ((j != i) && recept)
-  {
-    noInterrupts();
-    if (val[j])
-    {
-      tampon = val[j];
-      Serial.print("valeur : ");
-      Serial.println(tampon );
-      if (tampon > 2000)
-      {
-        ok = 1;
-        recept = 0;
-        //    Serial.println("fini1");
-      }
-      else
-      {
-        if (tampon > 750)
-        {
-          trame[k] = 1;
-          //     Serial.print("1");
-        }
-        else
-        {
-          //                Serial.print("0");
-          trame[k] = 0;
-        }
-        k++;
-      }
-      val[j] = 0;
-
-    }
-    if (j++ >= maxi) j = 0;
-    interrupts();
-  }
-
-  if (ok)
-  {
-    l = 0;
-    while (l < k && k != 0)
-    {
-      if (trame[l] == 1 && trame[l + 1] == 0)
-        Serial.print("1");
-      else
-        Serial.print("0");
-      l = l + 2;
-    }
-    Serial.println();
-    ok = 0;
-    k = 0;
-  }
+  //  toto = (micros() - memo);
+  //
+  //  if (recept && (toto > 20000))
+  //  { ok = 1;
+  //    recept = 0;
+  //    //    Serial.print(toto);
+  //    //    Serial.print(" : ");
+  //    //    Serial.print(micros());
+  //    //    Serial.print(" : ");
+  //    //          Serial.print(micros() - memo);
+  //    //  Serial.println(" -> fini");
+  //  }
+  //
+  //  if ((j != i) && recept)
+  //  {
+  //    noInterrupts();
+  //    if (val[j])
+  //    {
+  //      tampon = val[j];
+  //      Serial.print("valeur : ");
+  //      Serial.println(tampon );
+  //      if (tampon > 2000)
+  //      {
+  //        ok = 1;
+  //        recept = 0;
+  //        //    Serial.println("fini1");
+  //      }
+  //      else
+  //      {
+  //        if (tampon > 750)
+  //        {
+  //          trame[k] = 1;
+  //          //     Serial.print("1");
+  //        }
+  //        else
+  //        {
+  //          //                Serial.print("0");
+  //          trame[k] = 0;
+  //        }
+  //        k++;
+  //      }
+  //      val[j] = 0;
+  //
+  //    }
+  //    if (j++ >= maxi) j = 0;
+  //    interrupts();
+  //  }
+  //
+  //  if (ok)
+  //  {
+  //    l = 0;
+  //    while (l < k && k != 0)
+  //    {
+  //      if (trame[l] == 1 && trame[l + 1] == 0)
+  //        Serial.print("1");
+  //      else
+  //        Serial.print("0");
+  //      l = l + 2;
+  //    }
+  //    Serial.println();
+  //    ok = 0;
+  //    k = 0;
+  //  }
 
 
 }
