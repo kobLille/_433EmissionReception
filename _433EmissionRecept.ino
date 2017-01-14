@@ -17,6 +17,7 @@ class DIOClass {
     byte tEnvoieRequete[40];
     long trame, pointer;
     int repetition;
+    int debut;
 
     void begin(uint8_t sortie) { //Fontion permettant l'initialisation
       Serial.println("begin");
@@ -41,7 +42,7 @@ class DIOClass {
           else {
             if (fin)
             {
-              if (repetition--)
+              if (--repetition)
               {
                 pointer = 0x80000000;
                 initCpt(2);
@@ -85,53 +86,41 @@ class DIOClass {
     }
 
     void bitSuivant() {
-//      if (!toggle)
-//      {
-//        pointer = pointer >> 1;
-//        pointer = pointer & 0x7FFFFFFF;
-//      }
 
-      if (pointer && enCours)
+      if (!debut)
       {
-        //      Serial.println("coucou ");
-        if (!toggle) {
-          //Serial.print(trame & pointer,BIN);
-          //Serial.print(" : ");
-          toggle = 1;
-          //        Serial.println("------------------------");
-          if (trame & pointer) {
-//            Serial.print(1);
-//            Serial.print(" : "); 
-//            Serial.println(pointer,BIN); 
-            initCpt(1);
+        if (pointer && enCours)
+        {
+          if (!toggle) {
+            toggle = 1;
+            if (trame & pointer) {
+              initCpt(1);
+            }
+            else
+            {
+              initCpt(0);
+            }
           }
-          else
-          {
-//            Serial.print(0);
-//            Serial.print(" : "); 
-//            Serial.println(pointer,BIN); 
-           initCpt(0);
+          else {
+            toggle = 0;
+            if (trame & pointer)
+              initCpt(0);
+            else
+              initCpt(1);
+
+            pointer = pointer >> 1;
+            pointer = pointer & 0x7FFFFFFF;
           }
         }
-        else {
-          toggle = 0;
-          if (trame & pointer)
-            initCpt(0);
-          else
-            initCpt(1);
-              pointer = pointer >> 1;
-        pointer = pointer & 0x7FFFFFFF;
+        else
+        {
+          initCpt(3);
+          fin = 1;
+          // Serial.println("Fin");
         }
-
-
       }
       else
-      {
-        initCpt(3);
-        fin = 1;
-        Serial.println("Fin");
-      }
-
+        debut = 0;
       maj();
     }
 
@@ -169,6 +158,7 @@ class DIOClass {
         case 2:  //cpt pour le début de l'envoie d'une trame
           cpt1 = 1;
           cpt0 = 10;
+          debut = 1;
           break;
         case 3:  //cpt pour la fin de l'envoie d'une trame
           cpt1 = 1;
@@ -249,8 +239,8 @@ void loop() {
     {
       DIO.envoieCours(0xEB5CAA, 0, 1, 0x9, 3);
       //  break;
-      //    delay(3000);
-      //    DIO.envoieCours(0xEB5CAA, 0, 0, 0x9, 3);
+          delay(3000);
+          DIO.envoieCours(0xEB5CAA, 0, 0, 0x9, 3);
       //  break;
     }
     //caractere = 0;
